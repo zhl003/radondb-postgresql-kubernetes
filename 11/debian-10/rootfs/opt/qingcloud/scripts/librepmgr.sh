@@ -11,7 +11,6 @@
 . /opt/qingcloud/scripts/libos.sh
 . /opt/qingcloud/scripts/libvalidations.sh
 . /opt/qingcloud/scripts/libnet.sh
-set -ex 
 ########################
 # Get repmgr node id
 # Globals:
@@ -359,6 +358,7 @@ repmgr_inject_postgresql_configuration() {
     postgresql_set_property "archive_command" "/bin/true"
     postgresql_configure_connections
     postgresql_configure_timezone
+    postgresql_configure_shared_buffers
     # Redirect logs to POSTGRESQL_LOG_FILE
     postgresql_configure_logging
     postgresql_set_property "logging_collector" "on"
@@ -667,7 +667,7 @@ repmgr_initialize() {
     postgresql_enable_remote_connections
     # Configure port and restrict access to PostgreSQL (MD5)
     postgresql_set_property "port" "$POSTGRESQL_PORT_NUMBER"
-
+    postgresql_configure_synchronous_replication
     postgresql_configure_replication_parameters
     postgresql_configure_fsync
 

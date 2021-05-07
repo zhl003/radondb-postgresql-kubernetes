@@ -29,7 +29,7 @@
 postgresqlImage:
   registry: docker.io
   repository: zhonghl003/postgresql-repmgr
-  tag: 11.11.0-debian-10-r58
+  tag: 11.11.0-debian-r1
   ## Specify a imagePullPolicy. Defaults to 'Always' if image tag is 'latest', else set to 'IfNotPresent'
   ## ref: http://kubernetes.io/docs/user-guide/images/#pre-pulling-images
   ##
@@ -50,7 +50,7 @@ postgresqlImage:
 pgpoolImage:
   registry: docker.io
   repository: zhonghl003/pgpool
-  tag: 4.2.2-debian-10-r57
+  tag: 4.2.2-debian-10-r1
   ## Specify a imagePullPolicy. Defaults to 'Always' if image tag is 'latest', else set to 'IfNotPresent'
   ## ref: http://kubernetes.io/docs/user-guide/images/#pre-pulling-images
   ##
@@ -144,7 +144,7 @@ postgresql:
 
   ## Number of replicas to deploy
   ##
-  replicaCount: 2
+  replicaCount: 3
 
   ## Update strategy for PostgreSQL statefulset
   ## ref: https://kubernetes.io/docs/concepts/workloads/controllers/statefulset/#update-strategies
@@ -194,7 +194,7 @@ postgresql:
     key: ""
     ## Node label values to match
     ## E.g.
-    ## values:
+    ## values:  
     ##   - e2e-az1
     ##   - e2e-az2
     ##
@@ -271,11 +271,20 @@ postgresql:
 
   ## Extra volumes to add to the deployment
   ##
-  extraVolumes: []
+  # extraVolumes: []
+  extraVolumes:
+    - name: dshm
+      emptyDir:
+        medium: Memory
+        sizeLimit: 512Mi
+
 
   ## Extra volume mounts to add to the container
   ##
-  extraVolumeMounts: []
+  # extraVolumeMounts: []
+  extraVolumeMounts:
+    - name: dshm
+      mountPath: /dev/shm
 
   ## Extra init containers to add to the deployment
   ##
@@ -368,7 +377,7 @@ postgresql:
 
   ## Synchronous replication
   ##
-  syncReplication: false
+  syncReplication: true
 
   ## Repmgr configuration parameters
   ##
@@ -616,11 +625,18 @@ pgpool:
 
   ## Extra volumes to add to the deployment
   ##
-  extraVolumes: []
+  # extraVolumes: []
+  extraVolumes:
+    - name: dshm
+      emptyDir:
+        medium: Memory
 
   ## Extra volume mounts to add to the container
   ##
-  extraVolumeMounts: []
+  # extraVolumeMounts: [] Checking pgpool health.
+  extraVolumeMounts:
+    - name: dshm
+      mountPath: /dev/shm
 
   ## Extra init containers to add to the deployment
   ##

@@ -334,7 +334,7 @@ function MongoDBFunctions(opts) {
    *  }
    *}
    * // Update fields 'name' and 'second' using admin database credentials
-   * updateFields('bitnamidb', 'bitnamicol', {name: "qingcloud"},
+   * updateFields('qingclouddb', 'qingcloudcol', {name: "qingcloud"},
    *               {"name":"qingcloud", "lastname.second": "value simplicity"},
    *               {user: 'root', password: 'qwer1234', database: 'admin'})
    */
@@ -359,7 +359,7 @@ function MongoDBFunctions(opts) {
    * @example
    * // Select the column Users in the table user from the mysql database in the default database server
    * // (root@127.0.0.1 at port 27017) identified by 'password13'
-   * getDocuments('bitnamidb', 'bitnamicol', {name: "qingcloud"}, {password: 'password123', where: { User: 'root'}});
+   * getDocuments('qingclouddb', 'qingcloudcol', {name: "qingcloud"}, {password: 'password123', where: { User: 'root'}});
    */
   function getDocuments(database, collection, query, options) {
     const command = `db = db.getSiblingDB('${database}'); db.${collection}.find(${JSON.stringify(query, null, 2)})`;
@@ -381,7 +381,7 @@ function MongoDBFunctions(opts) {
    * @example
    * // Insert a new row in the table 'companies' with values 'Qingcloud, SF' for the columns 'name, place'
    * // and setting the remaining columns to default value in the default database server identified by 'password123'
-   * insert('bitnamidb', 'bitnamicol', {'name': 'Qingcloud', 'place': 'SF'}, {password: 'password123'});
+   * insert('qingclouddb', 'qingcloudcol', {'name': 'Qingcloud', 'place': 'SF'}, {password: 'password123'});
    */
   function insert(database, collection, data, options) {
     const command = `db = db.getSiblingDB('${database}'); db.${collection}.insert(${JSON.stringify(data, null, 2)})`;

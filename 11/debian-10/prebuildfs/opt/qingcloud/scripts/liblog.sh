@@ -21,7 +21,7 @@ CYAN='\033[38;5;6m'
 #########################
 stderr_print() {
     # 'is_boolean_yes' is defined in libvalidations.sh, but depends on this file so we cannot source it
-    local bool="${BITNAMI_QUIET:-false}"
+    local bool="${QINGCLOUD_QUIET:-false}"
     # comparison is performed without regard to the case of alphabetic characters
     shopt -s nocasematch
     if ! [[ "$bool" = 1 || "$bool" =~ ^(yes|true)$ ]]; then
@@ -72,7 +72,7 @@ error() {
 ########################
 # Log a 'debug' message
 # Globals:
-#   BITNAMI_DEBUG
+#   QINGCLOUD_DEBUG
 # Arguments:
 #   None
 # Returns:
@@ -80,7 +80,7 @@ error() {
 #########################
 debug() {
     # 'is_boolean_yes' is defined in libvalidations.sh, but depends on this file so we cannot source it
-    local bool="${BITNAMI_DEBUG:-false}"
+    local bool="${QINGCLOUD_DEBUG:-false}"
     # comparison is performed without regard to the case of alphabetic characters
     shopt -s nocasematch
     if [[ "$bool" = 1 || "$bool" =~ ^(yes|true)$ ]]; then

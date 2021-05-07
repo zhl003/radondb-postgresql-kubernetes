@@ -114,7 +114,7 @@ spec:
           lifecycle: {{- include "common.tplvalues.render" (dict "value" .Values.pgpool.lifecycleHooks "context" $) | nindent 12 }}
           {{- end }}
           env:
-            - name: BITNAMI_DEBUG
+            - name: QINGCLOUD_DEBUG
               value: {{ ternary "true" "false" .Values.pgpoolImage.debug | quote }}
             {{- if or .Values.pgpool.customUsersSecret .Values.pgpool.customUsers }}
             - name: PGPOOL_POSTGRES_CUSTOM_USERS

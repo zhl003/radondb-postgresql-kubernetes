@@ -44,7 +44,7 @@ data:
 
     export MODULE="pre-stop-hook"
 
-    if [[ "${BITNAMI_DEBUG}" == "true" ]]; then
+    if [[ "${QINGCLOUD_DEBUG}" == "true" ]]; then
         info "Bash debug is on"
     else
         info "Bash debug is off"
@@ -58,13 +58,18 @@ data:
     postgresql_enable_nss_wrapper
 
     # Prepare env vars for managing roles
-    primary_node="$(repmgr_get_primary_node)"
+    primary_node="$(repmgr_get_upstream_node)"
     primary_host="$(echo $primary_node | awk '{print $1}')"
+    # unregister standby node before leaving
+    if ! [[ "$primary_host" == "$REPMGR_NODE_NETWORK_NAME" ]] ; then
+        info "Unregister standby before leaving the cluster."
+        repmgr_unregister_standby
+    fi
 
     # Stop postgresql for graceful exit.
     postgresql_stop
 
-    if [[ "$primary_host" == "$REPMGR_NODE_NETWORK_NAME" ]]; then
+    if [[ "$primary_host" == "$REPMGR_NODE_NETWORK_NAME" ]] ; then
         info "Primary node need to wait for a new primary node before leaving the cluster"
         retry_while is_new_primary_ready 10 5
     else

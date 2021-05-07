@@ -76,7 +76,7 @@ class MysqlHandler extends DatabaseHandler {
   createDatabaseForApp(name, options) {
     options = _.defaults(options || {}, {id: 'appDatabase'});
     const databaseSettings = {
-      name: `bitnami_${name}`,
+      name: `qingcloud_${name}`,
       user: `bn_${name}`,
       password: $crypt.rand({size: 10, alphanumeric: true}),
     };
@@ -86,7 +86,7 @@ class MysqlHandler extends DatabaseHandler {
     }
     const previousDatabases = mysqlCore.execute('SHOW DATABASES;', this.connection);
     while (previousDatabases.match(databaseSettings.name)) {
-      databaseSettings.name = `bitnami_${name}_${$crypt.rand({size: 5, alphanumeric: true})}`;
+      databaseSettings.name = `qingcloud_${name}_${$crypt.rand({size: 5, alphanumeric: true})}`;
     }
     this.logger.debug(`Creating database '${databaseSettings.name}'`
                + `for '${databaseSettings.user}' with '${databaseSettings.password}'`);
