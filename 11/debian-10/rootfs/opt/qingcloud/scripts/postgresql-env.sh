@@ -4,19 +4,19 @@
 
 # The values for all environment variables will be set in the below order of precedence
 # 1. Custom environment variables defined below after Qingcloud defaults
-# 2. Constants defined in this file (environment variables with no default), i.e. BITNAMI_ROOT_DIR
+# 2. Constants defined in this file (environment variables with no default), i.e. QINGCLOUD_ROOT_DIR
 # 3. Environment variables overridden via external files using *_FILE variables (see below)
 # 4. Environment variables set externally (i.e. current Bash context/Dockerfile/userdata)
 
 # Load logging library
 . /opt/qingcloud/scripts/liblog.sh
 
-export BITNAMI_ROOT_DIR="/opt/qingcloud"
-export BITNAMI_VOLUME_DIR="/qingcloud"
+export QINGCLOUD_ROOT_DIR="/opt/qingcloud"
+export QINGCLOUD_VOLUME_DIR="/qingcloud"
 
 # Logging configuration
 export MODULE="${MODULE:-postgresql}"
-export BITNAMI_DEBUG="${BITNAMI_DEBUG:-false}"
+export QINGCLOUD_DEBUG="${QINGCLOUD_DEBUG:-false}"
 
 # By setting an environment variable matching *_FILE to a file path, the prefixed environment
 # variable will be overridden with the value specified in that file
@@ -207,7 +207,7 @@ export POSTGRESQL_PID_FILE="$POSTGRESQL_TMP_DIR/postgresql.pid"
 export POSTGRESQL_BIN_DIR="$POSTGRESQL_BASE_DIR/bin"
 export POSTGRESQL_INITSCRIPTS_DIR="/docker-entrypoint-initdb.d"
 export POSTGRESQL_PREINITSCRIPTS_DIR="/docker-entrypoint-preinitdb.d"
-export PATH="${POSTGRESQL_BIN_DIR}:${BITNAMI_ROOT_DIR}/common/bin:${PATH}"
+export PATH="${POSTGRESQL_BIN_DIR}:${QINGCLOUD_ROOT_DIR}/common/bin:${PATH}"
 
 # System users (when running with a privileged user)
 export POSTGRESQL_DAEMON_USER="postgres"
@@ -385,7 +385,7 @@ export REPMGR_PRIMARY_HOST="${REPMGR_PRIMARY_HOST:-}"
 export REPMGR_PRIMARY_PORT="${REPMGR_PRIMARY_PORT:-5432}"
 export REPMGR_USE_REPLICATION_SLOTS="${REPMGR_USE_REPLICATION_SLOTS:-1}"
 export REPMGR_MASTER_RESPONSE_TIMEOUT="${REPMGR_MASTER_RESPONSE_TIMEOUT:-20}"
-export REPMGR_DEGRADED_MONITORING_TIMEOUT="${REPMGR_DEGRADED_MONITORING_TIMEOUT:-5}"
+export REPMGR_DEGRADED_MONITORING_TIMEOUT="${REPMGR_DEGRADED_MONITORING_TIMEOUT:-20}"
 export REPMGR_UPGRADE_EXTENSION="${REPMGR_UPGRADE_EXTENSION:-no}"
 
 # Internal (Replication Manager)

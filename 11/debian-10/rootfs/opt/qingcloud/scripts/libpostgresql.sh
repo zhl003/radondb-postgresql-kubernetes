@@ -329,6 +329,7 @@ EOF
 #   None
 #########################
 postgresql_set_property() {
+
     local -r property="${1:?missing property}"
     local -r value="${2:?missing value}"
     local -r conf_file="${3:-$POSTGRESQL_CONF_FILE}"
@@ -338,6 +339,7 @@ postgresql_set_property() {
     else
         echo "${property} = '${value}'" >>"$conf_file"
     fi
+    info "Setting ${property} = '${value}'"
 }
 
 ########################
@@ -388,9 +390,19 @@ postgresql_configure_replication_parameters() {
 #   None
 #########################
 postgresql_configure_synchronous_replication() {
+    # local sync_nodes_except_myself=()
+    # local _sync_nodes_except_myself
+    # read -r -a nodes <<<"$(tr ',;' ' ' <<<"${REPMGR_PARTNER_NODES}")"
+    # for node in "${nodes[@]}"; do
+    #     if ! [[ "$node" = "$REPMGR_NODE_NAME" ]]; then
+    #         sync_nodes_except_myself+=(",${node%%.*}")
+    #     fi
+    # done
+    # _sync_nodes_except_myself=${sync_nodes_except_myself[*]}
+    # _sync_nodes_except_myself=${_sync_nodes_except_myself#*,}
     if ((POSTGRESQL_NUM_SYNCHRONOUS_REPLICAS > 0)); then
         postgresql_set_property "synchronous_commit" "$POSTGRESQL_SYNCHRONOUS_COMMIT_MODE"
-        postgresql_set_property "synchronous_standby_names" "${POSTGRESQL_NUM_SYNCHRONOUS_REPLICAS} (\"${POSTGRESQL_CLUSTER_APP_NAME}\")"
+        postgresql_set_property "synchronous_standby_names" "FIRST 1 (*)"
     fi
 }
 
@@ -588,7 +600,7 @@ postgresql_initialize() {
         is_boolean_yes "$create_conf_file" && postgresql_configure_fsync
         is_boolean_yes "$create_conf_file" && is_boolean_yes "$POSTGRESQL_ENABLE_TLS" && postgresql_configure_tls
         [[ "$POSTGRESQL_REPLICATION_MODE" = "master" ]] && [[ -n "$POSTGRESQL_REPLICATION_USER" ]] && is_boolean_yes "$create_pghba_file" && postgresql_add_replication_to_pghba
-        [[ "$POSTGRESQL_REPLICATION_MODE" = "master" ]] && is_boolean_yes "$create_pghba_file" && postgresql_configure_synchronous_replication
+        [[ "$POSTGRESQL_REPLICATION_MODE" = "master" ]] && postgresql_configure_synchronous_replication
         [[ "$POSTGRESQL_REPLICATION_MODE" = "slave" ]] && postgresql_configure_recovery
     else
         if [[ "$POSTGRESQL_REPLICATION_MODE" = "master" ]]; then
@@ -606,7 +618,6 @@ postgresql_initialize() {
             is_boolean_yes "$create_pghba_file" && postgresql_restrict_pghba
             [[ -n "$POSTGRESQL_REPLICATION_USER" ]] && postgresql_create_replication_user
             is_boolean_yes "$create_conf_file" && postgresql_configure_replication_parameters
-            is_boolean_yes "$create_pghba_file" && postgresql_configure_synchronous_replication
             is_boolean_yes "$create_conf_file" && postgresql_configure_fsync
             is_boolean_yes "$create_conf_file" && is_boolean_yes "$POSTGRESQL_ENABLE_TLS" && postgresql_configure_tls
             [[ -n "$POSTGRESQL_REPLICATION_USER" ]] && is_boolean_yes "$create_pghba_file" && postgresql_add_replication_to_pghba
@@ -736,7 +747,7 @@ postgresql_start_bg() {
         pg_ctl_cmd+=("gosu" "$POSTGRESQL_DAEMON_USER")
     fi
     pg_ctl_cmd+=("$POSTGRESQL_BIN_DIR"/pg_ctl)
-    if [[ "${BITNAMI_DEBUG:-false}" = true ]] || [[ $pg_logs = true ]]; then
+    if [[ "${QINGCLOUD_DEBUG:-false}" = true ]] || [[ $pg_logs = true ]]; then
         "${pg_ctl_cmd[@]}" "start" "${pg_ctl_flags[@]}"
     else
         "${pg_ctl_cmd[@]}" "start" "${pg_ctl_flags[@]}" >/dev/null 2>&1
@@ -814,12 +825,12 @@ postgresql_master_init_db() {
     initdb_cmd+=("$POSTGRESQL_BIN_DIR/initdb")
     if [[ -n "${initdb_args[*]:-}" ]]; then
         info "Initializing PostgreSQL with ${initdb_args[*]} extra initdb arguments"
-        if [[ "${BITNAMI_DEBUG:-false}" = true ]]; then
+        if [[ "${QINGCLOUD_DEBUG:-false}" = true ]]; then
             "${initdb_cmd[@]}" -E UTF8 -D "$POSTGRESQL_DATA_DIR" -U "postgres" "${initdb_args[@]}"
         else
             "${initdb_cmd[@]}" -E UTF8 -D "$POSTGRESQL_DATA_DIR" -U "postgres" "${initdb_args[@]}" >/dev/null 2>&1
         fi
-    elif [[ "${BITNAMI_DEBUG:-false}" = true ]]; then
+    elif [[ "${QINGCLOUD_DEBUG:-false}" = true ]]; then
         "${initdb_cmd[@]}" -E UTF8 -D "$POSTGRESQL_DATA_DIR" -U "postgres"
     else
         "${initdb_cmd[@]}" -E UTF8 -D "$POSTGRESQL_DATA_DIR" -U "postgres" >/dev/null 2>&1
@@ -929,6 +940,7 @@ postgresql_configure_logging() {
 #########################
 postgresql_configure_connections() {
     [[ -n "$POSTGRESQL_MAX_CONNECTIONS" ]] && postgresql_set_property "max_connections" "$POSTGRESQL_MAX_CONNECTIONS"
+    [[ -z "$POSTGRESQL_MAX_CONNECTIONS" ]] && postgresql_set_property "max_connections" "$(("$(get_total_memory)" / 16))"
     [[ -n "$POSTGRESQL_TCP_KEEPALIVES_IDLE" ]] && postgresql_set_property "tcp_keepalives_idle" "$POSTGRESQL_TCP_KEEPALIVES_IDLE"
     [[ -n "$POSTGRESQL_TCP_KEEPALIVES_INTERVAL" ]] && postgresql_set_property "tcp_keepalives_interval" "$POSTGRESQL_TCP_KEEPALIVES_INTERVAL"
     [[ -n "$POSTGRESQL_TCP_KEEPALIVES_COUNT" ]] && postgresql_set_property "tcp_keepalives_count" "$POSTGRESQL_TCP_KEEPALIVES_COUNT"
@@ -948,6 +960,20 @@ postgresql_configure_timezone() {
     ([[ -n "$POSTGRESQL_TIMEZONE" ]] && postgresql_set_property "timezone" "$POSTGRESQL_TIMEZONE") || true
 }
 
+########################
+# Configure shared_buffers
+# Globals:
+#   None
+# Arguments:
+#   None
+# Returns:
+#   Boolean
+#########################
+postgresql_configure_shared_buffers() {
+    os_total_memory="$(get_total_memory)"
+    shared_buffers=$((os_total_memory / 4))MB
+    postgresql_set_property "shared_buffers" "$shared_buffers" || true
+}
 ########################
 # Remove pg_hba.conf lines based on filter
 # Globals:
@@ -1001,7 +1027,7 @@ get_env_var_value() {
 # Stdin:
 #   Query/queries to execute
 # Globals:
-#   BITNAMI_DEBUG
+#   QINGCLOUD_DEBUG
 #   POSTGRESQL_*
 # Arguments:
 #   $1 - Database where to run the queries
@@ -1016,17 +1042,17 @@ postgresql_execute_print_output() {
     local -r user="${2:-postgres}"
     local -r pass="${3:-}"
     local opts
-    read -r -a opts <<< "${@:4}"
+    read -r -a opts <<<"${@:4}"
 
     local args=("-U" "$user")
     [[ -n "$db" ]] && args+=("-d" "$db")
-    [[ "${#opts[@]}" -gt 0 ]] && args+=( "${opts[@]}" )
+    [[ "${#opts[@]}" -gt 0 ]] && args+=("${opts[@]}")
 
     # Obtain the command specified via stdin
     local sql_cmd
-    sql_cmd="$(< /dev/stdin)"
+    sql_cmd="$(</dev/stdin)"
     debug "Executing SQL command:\n$sql_cmd"
-    PGPASSWORD=$pass psql "${args[@]}" <<< "$sql_cmd"
+    PGPASSWORD=$pass psql "${args[@]}" <<<"$sql_cmd"
 }
 
 ########################
@@ -1034,7 +1060,7 @@ postgresql_execute_print_output() {
 # Stdin:
 #   Query/queries to execute
 # Globals:
-#   BITNAMI_DEBUG
+#   QINGCLOUD_DEBUG
 #   POSTGRESQL_*
 # Arguments:
 #   $1 - Database where to run the queries
@@ -1045,7 +1071,7 @@ postgresql_execute_print_output() {
 #   None
 #########################
 postgresql_execute() {
-    if [[ "${BITNAMI_DEBUG:-false}" = true ]]; then
+    if [[ "${QINGCLOUD_DEBUG:-false}" = true ]]; then
         "postgresql_execute_print_output" "$@"
     elif [[ "${NO_ERRORS:-false}" = true ]]; then
         "postgresql_execute_print_output" "$@" 2>/dev/null
@@ -1059,7 +1085,7 @@ postgresql_execute() {
 # Stdin:
 #   Query/queries to execute
 # Globals:
-#   BITNAMI_DEBUG
+#   QINGCLOUD_DEBUG
 #   DB_*
 # Arguments:
 #   $1 - Remote PostgreSQL service hostname
@@ -1083,7 +1109,7 @@ postgresql_remote_execute_print_output() {
 # Stdin:
 #   Query/queries to execute
 # Globals:
-#   BITNAMI_DEBUG
+#   QINGCLOUD_DEBUG
 #   DB_*
 # Arguments:
 #   $1 - Remote PostgreSQL service hostname
@@ -1095,7 +1121,7 @@ postgresql_remote_execute_print_output() {
 # Returns:
 #   None
 postgresql_remote_execute() {
-    if [[ "${BITNAMI_DEBUG:-false}" = true ]]; then
+    if [[ "${QINGCLOUD_DEBUG:-false}" = true ]]; then
         "postgresql_remote_execute_print_output" "$@"
     elif [[ "${NO_ERRORS:-false}" = true ]]; then
         "postgresql_remote_execute_print_output" "$@" 2>/dev/null
@@ -1126,22 +1152,22 @@ postgresql_ensure_user_exists() {
     shift 1
     while [ "$#" -gt 0 ]; do
         case "$1" in
-            -p|--password)
-                shift
-                password="${1:?missing password}"
-                ;;
-            --host)
-                shift
-                db_host="${1:?missing database host}"
-                ;;
-            --port)
-                shift
-                db_port="${1:?missing database port}"
-                ;;
-            *)
-                echo "Invalid command line flag $1" >&2
-                return 1
-                ;;
+        -p | --password)
+            shift
+            password="${1:?missing password}"
+            ;;
+        --host)
+            shift
+            db_host="${1:?missing database host}"
+            ;;
+        --port)
+            shift
+            db_port="${1:?missing database port}"
+            ;;
+        *)
+            echo "Invalid command line flag $1" >&2
+            return 1
+            ;;
         esac
         shift
     done
@@ -1213,22 +1239,22 @@ postgresql_ensure_database_exists() {
     shift 1
     while [ "$#" -gt 0 ]; do
         case "$1" in
-            -u|--user)
-                shift
-                user="${1:?missing database user}"
-                ;;
-            --host)
-                shift
-                db_host="${1:?missing database host}"
-                ;;
-            --port)
-                shift
-                db_port="${1:?missing database port}"
-                ;;
-            *)
-                echo "Invalid command line flag $1" >&2
-                return 1
-                ;;
+        -u | --user)
+            shift
+            user="${1:?missing database user}"
+            ;;
+        --host)
+            shift
+            db_host="${1:?missing database host}"
+            ;;
+        --port)
+            shift
+            db_port="${1:?missing database port}"
+            ;;
+        *)
+            echo "Invalid command line flag $1" >&2
+            return 1
+            ;;
         esac
         shift
     done

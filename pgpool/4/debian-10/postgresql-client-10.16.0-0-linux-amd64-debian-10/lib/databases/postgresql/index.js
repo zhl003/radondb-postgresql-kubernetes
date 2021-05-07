@@ -416,8 +416,8 @@ function PostgresqlFunctions(opts) {
   * @param {string} [options.socket] - Database server socket
   * @returns {boolean} Boolean explaining whether a DB exists or not.
   * @example
-  * // checks if bitnamiRocks database exists
-  * existsDatabase('bitnamiRocks', {user: 'postgres',  host: 'postgresql'});
+  * // checks if qingcloudRocks database exists
+  * existsDatabase('qingcloudRocks', {user: 'postgres',  host: 'postgresql'});
   */
   function existsDatabase(database, options) {
     const _opts = _.defaults({}, options, {user: 'postgres', host: '127.0.0.1', port: '5432'});

@@ -1,4 +1,4 @@
-FROM docker.io/bitnami/minideb:buster
+FROM docker.io/zhonghl003/minideb:buster
 
 ENV HOME="/" \
     OS_ARCH="amd64" \
@@ -6,7 +6,7 @@ ENV HOME="/" \
     OS_NAME="linux"\
     TZ=Asia/Shanghai
 COPY prebuildfs /
-COPY postgresql-repmgr-10.16.0-11-linux-amd64-debian-10/files /opt/qingcloud
+COPY postgresql-repmgr-11.11.0-15-linux-amd64-debian-10/files /opt/qingcloud
 COPY gosu-1.12.0-2-linux-amd64-debian-10 /opt/qingcloud
 # Install required system packages and dependencies
 RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone

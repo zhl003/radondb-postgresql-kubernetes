@@ -614,7 +614,7 @@ function MysqlFunctions(opts) {
    * @param {Object} options - Options object
    * @example
    * // frush privileges
-   * flushPrivileges({user: 'root', password: 'bitnamiRocks', host: 'mariadb'});
+   * flushPrivileges({user: 'root', password: 'qingcloudRocks', host: 'mariadb'});
    */
   function flushPrivileges(options) {
     const _opts = _.defaults({}, options, {user: 'root', host: 'localhost', port: '3306'});
@@ -659,8 +659,8 @@ function MysqlFunctions(opts) {
    * @param {string|number} [options.port=3306] - Database server admin port
    * @param {string} [options.socket] - Database server socket
    * @example
-   * // checks if bitnamiRocks database exists
-   * existsDatabase('bitnamiRocks', {user: 'root',  host: 'mariadb'});
+   * // checks if qingcloudRocks database exists
+   * existsDatabase('qingcloudRocks', {user: 'root',  host: 'mariadb'});
    */
   function existsDatabase(database, options) {
     const _opts = _.defaults({}, options, {user: 'root', host: 'localhost', port: '3306'});

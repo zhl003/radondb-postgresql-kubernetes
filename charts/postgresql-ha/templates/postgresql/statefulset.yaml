@@ -101,8 +101,7 @@ spec:
           lifecycle:
             preStop:
               exec:
-                command:
-                  - /pre-stop.sh
+                command: ["/bin/sh","-c","/pre-stop.sh; while [ $(pgrep -f /opt/bitnami/postgresql/bin/postgres) ] ;  do sleep 1 ; done"]
           {{- end }}
           {{- if .Values.postgresql.command }}
           command: {{- include "common.tplvalues.render" (dict "value" .Values.postgresql.command "context" $) | nindent 12 }}
@@ -121,7 +120,7 @@ spec:
           {{- $postgresqlHeadlessServiceName := printf "%s-headless" (include "postgresql-ha.postgresql" .) }}
           {{- $clusterDomain:= .Values.clusterDomain }}
           env:
-            - name: BITNAMI_DEBUG
+            - name: QINGCLOUD_DEBUG
               value: {{ ternary "true" "false" .Values.postgresqlImage.debug | quote }}
             # PostgreSQL configuration
             - name: POSTGRESQL_VOLUME_DIR

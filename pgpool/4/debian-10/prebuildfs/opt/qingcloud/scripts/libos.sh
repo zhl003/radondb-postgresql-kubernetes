@@ -243,14 +243,14 @@ convert_to_mb() {
 #########################
 # Redirects output to /dev/null if debug mode is disabled
 # Globals:
-#   BITNAMI_DEBUG
+#   QINGCLOUD_DEBUG
 # Arguments:
 #   $@ - Command to execute
 # Returns:
 #   None
 #########################
 debug_execute() {
-    if ${BITNAMI_DEBUG:-false}; then
+    if ${QINGCLOUD_DEBUG:-false}; then
         "$@"
     else
         "$@" >/dev/null 2>&1

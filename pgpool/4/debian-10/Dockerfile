@@ -1,4 +1,4 @@
-FROM docker.io/bitnami/minideb:buster
+FROM docker.io/zhonghl003/minideb:buster
 
 ENV HOME="/" \
     OS_ARCH="amd64" \
@@ -28,7 +28,7 @@ ENV QINGCLOUD_APP_NAME="pgpool" \
     POSTGRESQL_PORT_NUMBER="5432" \
     POSTGRESQL_ROOT_PASSWORD="" \
     POSTGRESQL_ROOT_USER="postgres"\
-    LD_LIBRARY_PATH="/opt/qingcloud/postgresql/lib"
+    LD_LIBRARY_PATH="/opt/qingcloud/pgpool/lib:/opt/qingcloud/postgresql/lib:$PATH"
 
 EXPOSE 5432
 
